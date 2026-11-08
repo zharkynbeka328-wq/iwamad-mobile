@@ -1,15 +1,19 @@
+
 import { useState } from 'react';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   const [likes, setLikes] = useState(0);
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Hello, World!</Text>
-      <Text style={styles.name}>Zharkynbek Akmaral Tolenbekkyzy</Text>
+      <Text style={styles.name}>
+        Zharkynbek Akmaral Tolenbekkyzy
+      </Text>
 
       <Pressable
         style={styles.button}
@@ -20,11 +24,12 @@ export default function HomeScreen() {
 
       <Text style={styles.likes}>Likes: {likes}</Text>
 
-      <Link href="/events" asChild>
-        <Pressable style={styles.eventsButton}>
-          <Text style={styles.buttonText}>Events</Text>
-        </Pressable>
-      </Link>
+      <Pressable
+        style={styles.eventsButton}
+        onPress={() => router.push('/events')}
+      >
+        <Text style={styles.buttonText}>Events</Text>
+      </Pressable>
 
       <StatusBar style="auto" />
     </View>
