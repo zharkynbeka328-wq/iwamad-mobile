@@ -1,10 +1,41 @@
+
 import { Link, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { events } from '../../data/events';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useEvents } from '../../hooks/useEvents';
 
 export default function EventDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const event = events.find((item) => item.id === Number(id));
+
+  const { data, isPending, isError, error, refetch } = useEvents();
+
+  if (isPending) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.info}>Loading events</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Could not load events</Text>
+        <Text style={styles.info}>{error.message}</Text>
+        <Pressable style={styles.retryButton} onPress={() => refetch()}>
+          <Text style={styles.retryText}>Try again</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const event = data?.find((item) => item.id === Number(id));
 
   if (!event) {
     return (
@@ -38,6 +69,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
     padding: 24,
     justifyContent: 'center',
+    gap: 12,
   },
   title: {
     color: '#252B38',
@@ -55,5 +87,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginTop: 20,
+  },
+  retryButton: {
+    backgroundColor: '#2450D8',
+    minHeight: 44,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
 });

@@ -1,5 +1,7 @@
+
 import { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   StyleSheet,
@@ -8,25 +10,58 @@ import {
   View,
 } from 'react-native';
 import { router } from 'expo-router';
-import { events } from '../../data/events';
+import { useEvents } from '../../hooks/useEvents';
 
 export default function EventsScreen() {
   const [search, setSearch] = useState('');
   const [savedIds, setSavedIds] = useState<number[]>([]);
 
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useEvents();
+
   const filteredEvents = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return events.filter((event) =>
+    return (data ?? []).filter((event) =>
       `${event.title} ${event.place} ${event.date}`
         .toLowerCase()
         .includes(query),
     );
-  }, [search]);
+  }, [search, data]);
 
   function saveEvent(id: number) {
     setSavedIds((current) =>
       current.includes(id) ? current : [...current, id],
+    );
+  }
+
+  if (isPending) {
+    return (
+      <View style={styles.stateContainer}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.stateText}>Loading events</Text>
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.stateContainer}>
+        <Text style={styles.errorTitle}>Could not load events</Text>
+        <Text style={styles.stateText}>{error.message}</Text>
+        <Pressable
+          style={styles.retryButton}
+          onPress={() => refetch()}
+        >
+          <Text style={styles.retryText}>Try again</Text>
+        </Pressable>
+      </View>
     );
   }
 
@@ -49,6 +84,8 @@ export default function EventsScreen() {
         data={filteredEvents}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.list}
+        refreshing={isRefetching}
+        onRefresh={() => refetch()}
         ListEmptyComponent={
           <Text style={styles.empty}>No events found.</Text>
         }
@@ -95,6 +132,34 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
     padding: 20,
+  },
+  stateContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    gap: 12,
+  },
+  stateText: {
+    color: '#626B7A',
+    fontSize: 14,
+  },
+  errorTitle: {
+    color: '#252B38',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  retryButton: {
+    backgroundColor: '#2450D8',
+    minHeight: 44,
+    paddingHorizontal: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   heading: {
     fontSize: 26,
