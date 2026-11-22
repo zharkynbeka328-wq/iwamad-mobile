@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useEvents } from '../../hooks/useEvents';
+import { useSavedIds } from '../../hooks/useSavedIds';
+import { EventRow } from '../../components/EventRow';
 
 export default function EventsScreen() {
   const [search, setSearch] = useState('');
-  const [savedIds, setSavedIds] = useState<number[]>([]);
+  const { savedIds, toggleSaved } = useSavedIds();
 
   const {
     data,
@@ -34,12 +36,6 @@ export default function EventsScreen() {
         .includes(query),
     );
   }, [search, data]);
-
-  function saveEvent(id: number) {
-    setSavedIds((current) =>
-      current.includes(id) ? current : [...current, id],
-    );
-  }
 
   if (isPending) {
     return (
@@ -68,8 +64,13 @@ export default function EventsScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Campus Events</Text>
+
       <Text style={styles.subtitle}>
         Find an event and tap to see details.
+      </Text>
+
+      <Text style={styles.hint}>
+        Swipe or long-press an event to save it. Saved: {savedIds.length}
       </Text>
 
       <TextInput
@@ -89,39 +90,22 @@ export default function EventsScreen() {
         ListEmptyComponent={
           <Text style={styles.empty}>No events found.</Text>
         }
-        renderItem={({ item }) => {
-          const isSaved = savedIds.includes(item.id);
-
-          return (
-            <Pressable
-              style={({ pressed }) => [
-                styles.eventCard,
-                pressed && styles.pressedCard,
-              ]}
-              onPress={() =>
-                router.push({
-                  pathname: '/events/[id]',
-                  params: { id: String(item.id) },
-                })
-              }
-              onLongPress={() => saveEvent(item.id)}
-              delayLongPress={500}
-            >
-              <View style={styles.cardHeader}>
-                <Text style={styles.eventTitle}>{item.title}</Text>
-                {isSaved && <Text style={styles.saved}>★ Saved</Text>}
-              </View>
-
-              <Text style={styles.eventInfo}>Date: {item.date}</Text>
-              <Text style={styles.eventInfo}>Place: {item.place}</Text>
-              <Text style={styles.eventInfo}>Seats: {item.seats}</Text>
-
-              <Text style={styles.hint}>
-                Tap for details · Hold to save
-              </Text>
-            </Pressable>
-          );
-        }}
+        renderItem={({ item }) => (
+          <EventRow
+            title={item.title}
+            date={item.date}
+            place={item.place}
+            seats={item.seats}
+            saved={savedIds.includes(item.id)}
+            onPress={() =>
+              router.push({
+                pathname: '/events/[id]',
+                params: { id: String(item.id) },
+              })
+            }
+            onToggleSaved={() => toggleSaved(item.id)}
+          />
+        )}
       />
     </View>
   );
@@ -170,7 +154,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#626B7A',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   search: {
     backgroundColor: '#FFFFFF',
@@ -185,43 +169,10 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
     gap: 12,
   },
-  eventCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D9DCE2',
-    padding: 16,
-  },
-  pressedCard: {
-    backgroundColor: '#E8EDFF',
-    borderColor: '#2450D8',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginBottom: 10,
-  },
-  eventTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#252B38',
-  },
-  saved: {
-    color: '#2450D8',
-    fontWeight: 'bold',
-  },
-  eventInfo: {
-    color: '#444C5A',
-    fontSize: 14,
-    marginBottom: 4,
-  },
   hint: {
     color: '#2450D8',
     fontSize: 12,
-    marginTop: 10,
+    marginBottom: 12,
   },
   empty: {
     color: '#626B7A',

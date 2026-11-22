@@ -1,3 +1,4 @@
+
 import type { CampusEvent } from '../data/events';
 
 export const API_URL =
